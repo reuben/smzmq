@@ -1,0 +1,24 @@
+# vim: set ts=2 sw=2 tw=99 noet ft=python: 
+import os
+
+for i in SMZMQ.sdkInfo:
+    sdk = SMZMQ.sdkInfo[i]
+    if AMBuild.target['platform'] not in sdk['platform']:
+        continue
+
+    compiler = SMZMQ.DefaultHL2Compiler('src', i)
+    compiler['POSTLINKFLAGS'].extend('-L/usr/local/lib32 -lzmq'.split())
+
+    name = 'smzmq.ext.' + sdk['ext']
+    extension = AMBuild.AddJob(name)
+    binary = Cpp.LibraryBuilder(name, AMBuild, extension, compiler)
+    SMZMQ.PreSetupHL2Job(extension, binary, i)
+
+    binary.AddSourceFiles('src', [
+        'extension.cpp',
+        'sdk/smsdk_ext.cpp',
+    ])
+
+    SMZMQ.PostSetupHL2Job(extension, binary, i)
+    binary.SendToJob()
+
