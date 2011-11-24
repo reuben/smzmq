@@ -179,14 +179,15 @@ bool SMZMQ::RemovePoller(IThreadHandle* thread) {
     return false;
 }
 
-int ReadHandle(IPluginContext* pCtx, cell_t raw, HandleType_t type, const char* name, void* result) {
+template<typename T>
+int ReadHandle(IPluginContext* pCtx, cell_t raw, HandleType_t type, const char* name, T result) {
     Handle_t hndl = static_cast<Handle_t>(raw);
     HandleError err;
     HandleSecurity sec;
     sec.pOwner = NULL;
     sec.pIdentity = myself->GetIdentity();
     
-    if ((err=g_pHandleSys->ReadHandle(hndl, type, &sec, &result)) != HandleError_None)
+    if ((err = handlesys->ReadHandle(hndl, type, &sec, (void**)&result)) != HandleError_None)
         return pCtx->ThrowNativeError("Invalid %s handle %x (error %d)", name, hndl, err);
     
     return 1;
@@ -210,7 +211,7 @@ static cell_t CreateSocket(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketConnect(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: socket = %x", __FUNCTION__, socket);
@@ -227,7 +228,7 @@ static cell_t SocketConnect(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketBind(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: socket = %x", __FUNCTION__, socket);
@@ -244,7 +245,7 @@ static cell_t SocketBind(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketSubscribe(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     char* filter;
@@ -261,7 +262,7 @@ static cell_t SocketSubscribe(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketSetOpt(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: socket = %x", __FUNCTION__, socket);
@@ -286,7 +287,7 @@ static cell_t SocketSetOpt(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketGetOpt(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: socket = %x", __FUNCTION__, socket);
@@ -311,14 +312,14 @@ static cell_t SocketGetOpt(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketSend(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: socket = %x", __FUNCTION__, socket);
     
     zmq_msg_t* message;
     rc = ::ReadHandle(pCtx, params[2], g_MessageHandle, "message", message);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: message = %x", __FUNCTION__, message);
@@ -332,7 +333,7 @@ static cell_t SocketSend(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketRecv(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: socket = %x", __FUNCTION__, socket);
@@ -366,7 +367,7 @@ static cell_t CreateMessage(IPluginContext* pCtx, const cell_t *params) {
 static cell_t GetMessageSize(IPluginContext* pCtx, const cell_t *params) {
     zmq_msg_t *message;
     int rc = ::ReadHandle(pCtx, params[2], g_MessageHandle, "message", static_cast<void*>(message));
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: message = %x", __FUNCTION__, message);
@@ -377,7 +378,7 @@ static cell_t GetMessageSize(IPluginContext* pCtx, const cell_t *params) {
 static cell_t GetMessageData(IPluginContext* pCtx, const cell_t *params) {
     zmq_msg_t *message;
     int rc = ::ReadHandle(pCtx, params[1], g_MessageHandle, "message", static_cast<void*>(message));
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: message = %x", __FUNCTION__, message);
@@ -393,7 +394,7 @@ static cell_t GetMessageData(IPluginContext* pCtx, const cell_t *params) {
 static cell_t SocketPoll(IPluginContext* pCtx, const cell_t *params) {
     void* socket;
     int rc = ::ReadHandle(pCtx, params[1], g_SocketHandle, "socket", socket);
-    if (rc)
+    if (!rc)
         return rc;
     
     smutils->LogMessage(myself, "%s: socket = %x", __FUNCTION__, socket);
